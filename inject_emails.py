@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 EML Injector — sends generated phishing simulations to MailHog
-ECI SOC Team — Qevlar POC
+Internal SOC Team — Phishing Simulation Lab
 """
 import os
 import smtplib
@@ -40,7 +40,7 @@ def inject_emls(smtp_host: str, smtp_port: int, artifacts_dir: str, delay: float
     print(f"[+] View emails: http://localhost:8025")
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser(description="EML Injector — ECI Qevlar POC")
+    p = argparse.ArgumentParser(description="EML Injector — Phishing Simulation Lab")
     p.add_argument("--smtp", default="localhost:1025")
     p.add_argument("--artifacts", default="./phishing_artifacts")
     p.add_argument("--delay", type=float, default=0.5, help="Seconds between sends")

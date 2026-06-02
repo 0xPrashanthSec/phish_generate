@@ -1,9 +1,9 @@
-# ECI Phishing Simulation Lab
-### Qevlar SOC POC — Defensive Testing Infrastructure
+# Phishing Simulation Lab
+### Internal SOC — Defensive Testing Infrastructure
 
-**Purpose:** Generate realistic, fully benign phishing artifacts for validating Qevlar's autonomous triage, enrichment, and response capabilities — without using real client data or live phishing infrastructure.
+**Purpose:** Generate realistic, fully benign phishing artifacts for validating SOC detection rules, triage workflows, and automated response capabilities — without using real client data or live phishing infrastructure.
 
-> All artifacts are non-malicious. No credentials are captured. No external network traffic is generated. For internal ECI SOC use only.
+> All artifacts are non-malicious. No credentials are captured. No external network traffic is generated. For internal SOC use only.
 
 ---
 
@@ -16,7 +16,7 @@
 | `inject_emails.py` | Sends generated EMLs to MailHog via SMTP |
 | `docker-compose.yml` | Isolated lab stack — MailHog + landing server + nginx |
 | `landing_server.py` | Click-logger for test URLs — safe page, zero data capture |
-| `qevlar_test_scenarios.md` | 12 structured test scenarios + POC scorecard |
+| `test_scenarios.md` | 12 structured test scenarios + SOC validation scorecard |
 
 ---
 
@@ -62,7 +62,7 @@ python generate_phishing_artifacts.py
 python generate_phishing_artifacts.py \
   --count 5 \
   --url http://phishtest.internal \
-  --domain eci.com \
+  --domain novacorp.com \
   --output ./phishing_artifacts
 ```
 
@@ -79,7 +79,7 @@ Unblock-File .\Generate-PhishingArtifacts.ps1
 .\Generate-PhishingArtifacts.ps1 `
   -OutputDir ".\phishing_artifacts" `
   -TestBaseUrl "http://phishtest.internal" `
-  -TargetDomain "eci.com" `
+  -TargetDomain "novacorp.com" `
   -CountPerType 5
 ```
 
@@ -124,7 +124,7 @@ phishing_artifacts/
 │   ├── elastic/                   # Kibana Security alert JSON (one per EML)
 │   └── sentinel/                  # Microsoft Sentinel SecurityAlert table JSON
 │
-├── qevlar_payloads/               # Normalized Qevlar-compatible alert JSON
+├── soc_payloads/                  # Normalized SOC/SOAR-compatible alert JSON
 │
 └── reports/
     └── manifest.json              # Full artifact index with IOCs and metadata
@@ -182,22 +182,22 @@ phishing_artifacts/
                │                             │
                └──────────────┬──────────────┘
                               ▼
-                         [ Qevlar ]
+                     [ SOC Platform ]
                     Autonomous triage,
                     enrichment, response
 ```
 
 ---
 
-## Qevlar Integration
+## SIEM / SOAR Integration
 
-### Path 1 — Direct JSON ingest (fastest for POC)
+### Path 1 — Direct JSON ingest (fastest for validation)
 
-If Qevlar accepts a REST ingest endpoint or file drop, use the pre-built payloads:
+If your SOC platform accepts a REST ingest endpoint or file drop, use the pre-built payloads:
 
 ```bash
-# Each file in qevlar_payloads/ is a normalized alert envelope
-ls phishing_artifacts/qevlar_payloads/
+# Each file in soc_payloads/ is a normalized alert envelope
+ls phishing_artifacts/soc_payloads/
 
 # Sample structure per payload:
 {
@@ -248,16 +248,16 @@ done
 
 All EML files contain a custom header:
 ```
-X-Simulation-Type: PHISHING-POC-BENIGN-ECI
-X-SOC-Test-ID: QEVLAR-POC-<uuid>
+X-Simulation-Type: PHISHING-SIM-BENIGN
+X-SOC-Test-ID: SOC-SIM-<uuid>
 ```
 
 All Elastic alert JSONs contain:
 ```json
-"labels": { "simulation": "true", "poc": "qevlar" }
+"labels": { "simulation": "true", "poc": "soc-sim" }
 ```
 
-Use these to exclude from production detection rules or create a dedicated Qevlar POC workspace.
+Use these to exclude from production detection rules or create a dedicated simulation workspace.
 
 ---
 
@@ -316,7 +316,7 @@ options:
   --output  DIR    Output directory (default: ./phishing_artifacts)
   --count   INT    Samples per category (default: 3)
   --url     URL    Test base URL for links and QR codes (default: http://phishtest.internal)
-  --domain  STR    Target company email domain (default: eci.com)
+  --domain  STR    Target company email domain (default: novacorp.com)
 ```
 
 ### Generate-PhishingArtifacts.ps1
@@ -325,7 +325,7 @@ options:
 param(
   [string] $OutputDir     = ".\phishing_artifacts"
   [string] $TestBaseUrl   = "http://phishtest.internal"
-  [string] $TargetDomain  = "eci.com"
+  [string] $TargetDomain  = "novacorp.com"
   [int]    $CountPerType  = 3
 )
 ```
@@ -345,7 +345,7 @@ options:
 
 ## Test Scenarios — Summary
 
-Full details, validation checklists, and metric targets in `qevlar_test_scenarios.md`.
+Full details, validation checklists, and metric targets in `test_scenarios.md`.
 
 | # | Scenario | Validates |
 |---|----------|-----------|
@@ -395,14 +395,14 @@ Every generator run produces `reports/manifest.json` — a full artifact index c
       "sender": "James Wilson — CEO <james.wilson82@mfa-verify.org>",
       "date": "2026-05-14T09:26:04+00:00",
       "ioc": { "amount": "$78,000", "bank": "Citibank N.A.", "sender_domain": "mfa-verify.org" },
-      "qevlar_alert_id": "910afad4b49d42c6bb470cf09d72d2ae"
+      "alert_id": "910afad4b49d42c6bb470cf09d72d2ae"
     },
     ...
   ]
 }
 ```
 
-Use the manifest to cross-reference EML files against Qevlar alert IDs during validation.
+Use the manifest to cross-reference EML files against alert IDs during validation.
 
 ---
 
@@ -442,9 +442,9 @@ docker-compose down
 - HTML attachment pages contain client-side only markup; no form submissions are processed server-side
 - The landing server discards all POST body data
 - MailHog does not relay email; it is a capture-only SMTP sink
-- The `X-Simulation-Type: PHISHING-POC-BENIGN-ECI` header is present on every EML for identification and exclusion from production rules
+- The `X-Simulation-Type: PHISHING-SIM-BENIGN` header is present on every EML for identification and exclusion from production rules
 - Recommended: run the lab on an isolated VLAN or VM with no internet access; not required, but enforces hygiene
 
 ---
 
-*ECI SOC — Qevlar POC | Defensive Testing Infrastructure*
+*Internal SOC Team — Phishing Simulation Lab | Defensive Testing Infrastructure*

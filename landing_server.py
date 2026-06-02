@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Phishing Simulation Landing Server
-ECI SOC — Qevlar POC
+Internal SOC Team — Phishing Simulation Lab
 Logs click events. Does NOT capture or store any credentials.
 """
 import json
@@ -25,7 +25,7 @@ SAFE_RESPONSE = """<!DOCTYPE html>
 h2{color:#16a34a}p{color:#374151;font-size:14px}</style></head>
 <body><div class="card">
 <h2>&#x2705; You clicked a simulated phishing link</h2>
-<p>This was a <strong>controlled SOC test</strong> run by the ECI security team using Qevlar POC simulation artifacts.</p>
+<p>This was a <strong>controlled SOC test</strong> run by the internal security team as part of a phishing simulation exercise.</p>
 <p>No credentials were captured. No data was transmitted. This click event has been logged for SOC analysis.</p>
 <p style="font-size:12px;color:#6b7280;margin-top:16px;">Ref: {ref}</p>
 </div></body></html>"""

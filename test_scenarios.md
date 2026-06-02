@@ -1,5 +1,5 @@
-# Qevlar SOC POC — Phishing Test Scenarios
-**ECI SOC Team | Defensive Testing | Qevlar Evaluation**
+# Phishing Simulation — SOC Test Scenarios
+**Internal SOC Team | Defensive Testing | Detection Validation**
 
 ---
 
@@ -16,7 +16,7 @@
     ├── siem_alerts/
     │   ├── elastic/    ← Kibana alert JSON
     │   └── sentinel/   ← SecurityAlert table JSON
-    └── qevlar_payloads/ ← Normalized Qevlar input JSON
+    └── soc_payloads/     ← Normalized SOC/SOAR alert JSON
 
         │
         ▼ (inject_emails.py)
@@ -28,7 +28,7 @@
 
         │
         ▼
-[Qevlar]                ← picks up alert, investigates autonomously
+[SOC Platform]          ← picks up alert, investigates autonomously
 ```
 
 **Isolated network:** All test URLs resolve to `phishtest.internal` → landing server (port 8080). No external traffic.
@@ -52,7 +52,7 @@ pip install qrcode[pil] Pillow
 python scripts/generate_phishing_artifacts.py \
   --count 5 \
   --url http://phishtest.internal \
-  --domain eci.com
+  --domain novacorp.com
 
 # 5. Inject into MailHog
 python scripts/inject_emails.py \
@@ -76,9 +76,9 @@ open http://localhost:8025
 **Setup:**
 - Inject `emails/clickfix/*.eml` into MailHog
 - Load `siem_alerts/elastic/clickfix_*.json` into Elastic
-- OR use `qevlar_payloads/clickfix_*.json` directly if Qevlar accepts raw JSON
+- OR use `soc_payloads/clickfix_*.json` directly if the SOC platform accepts raw JSON
 
-**What Qevlar should do:**
+**Expected platform behavior:**
 - Detect PowerShell/MSHTA URL in email body
 - Extract URL IOC (`/clickfix?id=...`)
 - Correlate sender domain (newly registered, no SPF/DKIM/DMARC)
@@ -86,13 +86,13 @@ open http://localhost:8025
 - Recommend: quarantine + block sender domain + search for similar subjects
 
 **Validation checks:**
-- [ ] Qevlar auto-triaged without analyst intervention
+- [ ] Alert auto-triaged without analyst intervention
 - [ ] URL extracted and flagged
 - [ ] Sender domain flagged as suspicious (age < 30 days)
 - [ ] MITRE T1566.001 tag applied
 - [ ] Recommended actions include inbox search across all recipients
 
-**Edge case:** Run two ClickFix emails with identical sender domains — verify Qevlar correlates them as a campaign.
+**Edge case:** Run two ClickFix emails with identical sender domains — verify the platform correlates them as a campaign.
 
 ---
 
@@ -106,7 +106,7 @@ open http://localhost:8025
 - Inject `emails/credential_harvest/*.eml`
 - HTML attachment `SecureDocument.html` is base64-encoded in the EML
 
-**What Qevlar should do:**
+**Expected platform behavior:**
 - Detect HTML attachment type
 - Identify embedded link to credential page in body
 - Flag SPF/DKIM fail
@@ -119,7 +119,7 @@ open http://localhost:8025
 - [ ] Link IOC extracted from both body AND attachment
 - [ ] Recommended action includes notifying potential victims
 
-**Edge case:** Send three credential_harvest emails with slight subject variations to same recipient. Verify Qevlar groups them as a campaign rather than treating as isolated alerts.
+**Edge case:** Send three credential_harvest emails with slight subject variations to same recipient. Verify the platform groups them as a campaign rather than treating as isolated alerts.
 
 ---
 
@@ -133,7 +133,7 @@ open http://localhost:8025
 - Inject `emails/quishing/*.eml` (QR code embedded as inline image)
 - QR codes in `qr_codes/` point to `http://phishtest.internal/qr?...`
 
-**What Qevlar should do:**
+**Expected platform behavior:**
 - Detect inline image in email (Content-ID embedded)
 - If QR scanning is in enrichment chain — decode QR URL
 - Correlate QR URL with phishing indicator
@@ -141,11 +141,11 @@ open http://localhost:8025
 
 **Validation checks:**
 - [ ] Image attachment detected in email body
-- [ ] If Qevlar has QR decode capability → URL extracted from QR
+- [ ] If the platform has QR decode capability → URL extracted from QR
 - [ ] If not → alert escalated for analyst review (not auto-closed)
-- [ ] No false negative (Qevlar does not pass as benign)
+- [ ] No false negative (the platform does not pass as benign)
 
-**Note:** Quishing is specifically designed to bypass URL-scanning email gateways. Key test: verify Qevlar flags the alert even without a URL in the text body. This validates detection depth beyond gateway-relay alerts.
+**Note:** Quishing is specifically designed to bypass URL-scanning email gateways. Key test: verify the platform flags the alert even without a URL in the text body. This validates detection depth beyond gateway-relay alerts.
 
 ---
 
@@ -159,7 +159,7 @@ open http://localhost:8025
 - Inject `emails/bec/*.eml` (from address mimics exec, sent to finance@)
 - No URL in email — pure social engineering
 
-**What Qevlar should do:**
+**Expected platform behavior:**
 - Detect executive display name in From field
 - Identify envelope vs display-name mismatch
 - Detect wire transfer keywords (`wire`, `transfer`, `urgent`, `confidential`)
@@ -170,11 +170,11 @@ open http://localhost:8025
 **Validation checks:**
 - [ ] Executive impersonation detected via display name analysis
 - [ ] Wire transfer keyword detection triggered
-- [ ] No URL present — Qevlar still classifies as phishing (not benign)
+- [ ] No URL present — platform still classifies as phishing (not benign)
 - [ ] Escalation to human analyst vs auto-close
 - [ ] Recommended action: verify with exec via separate channel
 
-**Critical test:** Auto-response behavior. Qevlar should NOT auto-send a reply or take financial action. Verify it produces a recommendation and waits for approval.
+**Critical test:** Auto-response behavior. The platform should NOT auto-send a reply or take financial action. Verify it produces a recommendation and waits for approval.
 
 ---
 
@@ -188,7 +188,7 @@ open http://localhost:8025
 - Inject `emails/invoice/*.eml`
 - Payment URL in body (`/invoice?inv=INV-XXXXX`)
 
-**What Qevlar should do:**
+**Expected platform behavior:**
 - Extract invoice number and URL
 - Detect urgency language (`overdue`, `48 hours`, `pay now`)
 - Check sender domain — not a known vendor
@@ -198,7 +198,7 @@ open http://localhost:8025
 **Validation checks:**
 - [ ] URL extracted and categorized
 - [ ] Urgency-language detection triggered
-- [ ] Sender domain not in approved vendor list (if Qevlar supports allow-list)
+- [ ] Sender domain not in approved vendor list (if the platform supports allow-list)
 - [ ] Triage time recorded for SLA measurement
 
 ---
@@ -212,7 +212,7 @@ open http://localhost:8025
 **Setup:**
 - Inject `emails/delivery/*.eml`
 
-**What Qevlar should do:**
+**Expected platform behavior:**
 - Detect parcel/customs fee language
 - Extract tracking number and payment URL
 - Sender domain does not match claimed carrier (FedEx, DHL)
@@ -225,7 +225,7 @@ open http://localhost:8025
 - [ ] Auto-quarantine triggered without analyst
 - [ ] Triage completed within SLA
 
-**Note:** Delivery phishing volume is high. Key metric: can Qevlar handle 50+ of these without alert fatigue? Test with `--count 20` to generate bulk volume.
+**Note:** Delivery phishing volume is high. Key metric: can the platform handle 50+ of these without alert fatigue? Test with `--count 20` to generate bulk volume.
 
 ---
 
@@ -240,7 +240,7 @@ open http://localhost:8025
 - Contains HTML attachment (`MFA_Verification.html`) + body link
 - Urgency markers: "expires in 15 minutes"
 
-**What Qevlar should do:**
+**Expected platform behavior:**
 - Detect MFA reset language + HTML attachment
 - Extract verification URL + token parameter
 - Flag: sender domain is not internal IT domain
@@ -251,7 +251,7 @@ open http://localhost:8025
 - [ ] MFA/authentication keywords detected
 - [ ] HTML attachment type identified
 - [ ] Token extracted from URL IOC
-- [ ] Sender domain flagged as external (not `eci.com` or known IT vendor)
+- [ ] Sender domain flagged as external (not `novacorp.com` or known IT vendor)
 - [ ] Alert auto-escalated — not silently dropped
 
 ---
@@ -269,7 +269,7 @@ open http://localhost:8025
   - `mfa_reset_*.eml`
 - All use the same sender domain from `SenderDomains[]`
 
-**What Qevlar should do:**
+**Expected platform behavior:**
 - Identify shared sender domain across all three alerts
 - Group into a coordinated campaign
 - Escalate campaign-level severity even if individual alerts are Medium
@@ -298,7 +298,7 @@ python inject_emails.py --smtp localhost:1025 --delay 0.1
 - Injects ~160 phishing emails across 8 categories in under 2 minutes
 - Mix of Low (delivery), Medium (invoice, quishing), High (credential, MFA)
 
-**What Qevlar should do:**
+**Expected platform behavior:**
 - Auto-triage Low severity without human queue
 - Batch similar alerts (same type, same sender domain) into groups
 - Surface only High/Critical to analyst dashboard
@@ -307,9 +307,9 @@ python inject_emails.py --smtp localhost:1025 --delay 0.1
 **Validation checks:**
 - [ ] P3 volume processed without analyst intervention
 - [ ] High/Critical still escalated correctly in high-volume conditions
-- [ ] No dropped alerts (all 160 accounted for in Qevlar)
+- [ ] No dropped alerts (all 160 accounted for in the platform)
 - [ ] Triage time per alert — measure against baseline
-- [ ] Compare analyst ticket load: before Qevlar vs with Qevlar
+- [ ] Compare analyst ticket load: before automation vs with automation
 
 **Metric target:**
 - Mean time to triage (MTTT) < 2 min for P1/P2
@@ -321,9 +321,9 @@ python inject_emails.py --smtp localhost:1025 --delay 0.1
 ### Scenario 10 — Enrichment Depth Validation
 
 **Category:** Enrichment quality  
-**Purpose:** Validate Qevlar's external enrichment chain
+**Purpose:** Validate the platform's external enrichment chain
 
-**For each phishing type, verify Qevlar pulls:**
+**For each phishing type, verify the platform pulls:**
 
 | Enrichment Source      | Expected Output                          |
 |------------------------|------------------------------------------|
@@ -345,7 +345,7 @@ python inject_emails.py --smtp localhost:1025 --delay 0.1
 ### Scenario 11 — Automated Response Validation
 
 **Category:** Response action accuracy  
-**Purpose:** Validate Qevlar doesn't over-respond or under-respond
+**Purpose:** Validate the platform doesn't over-respond or under-respond
 
 | Phishing Type        | Expected Automated Action         | Should Require Approval? |
 |----------------------|-----------------------------------|--------------------------|
@@ -367,11 +367,11 @@ python inject_emails.py --smtp localhost:1025 --delay 0.1
 ### Scenario 12 — False Positive Check
 
 **Category:** Benign email handling  
-**Purpose:** Verify Qevlar does not flag legitimate email patterns
+**Purpose:** Verify the platform does not flag legitimate email patterns
 
 **Test emails to send (manually craft):**
 1. Legitimate DocuSign notification from `docusign.com` (real domain) about a contract
-2. Internal IT password reset from `eci.com` domain
+2. Internal IT password reset from `novacorp.com` domain
 3. Vendor invoice from a known/allowlisted vendor domain
 4. FedEx tracking from `fedex.com` (real domain, real tracking format)
 
@@ -398,7 +398,7 @@ python inject_emails.py --smtp localhost:1025 --delay 0.1
 
 ---
 
-## Elastic Index Mapping for Qevlar Integration
+## Elastic Index Mapping
 
 If ingesting from Elastic, use this index pattern for synthetic alerts:
 
@@ -423,7 +423,7 @@ Sentinel: import JSONs into a custom `SecurityAlerts_Simulation_CL` custom log t
 
 ## Notes
 
-- All EML files contain `X-Simulation-Type: PHISHING-POC-BENIGN-ECI` header — use this to filter in Qevlar or exclude from production alert rules
+- All EML files contain `X-Simulation-Type: PHISHING-POC-BENIGN-NovaCorp` header — use this to filter in the platform or exclude from production alert rules
 - All URLs resolve to `phishtest.internal` — this hostname must resolve to `127.0.0.1` or lab landing server IP in your `/etc/hosts` or internal DNS
 - Add `127.0.0.1 phishtest.internal` to `/etc/hosts` on any machine that will click test links
 - None of the HTML attachment pages capture or exfiltrate any data

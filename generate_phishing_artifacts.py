@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Phishing Simulation Artifact Generator
-ECI SOC Team - Qevlar POC (Defensive Testing Only)
-Generates benign phishing simulations for SOC validation and product evaluation.
+Internal SOC Team — Phishing Simulation Lab (Defensive Testing Only)
+Generates benign phishing simulations for SOC validation and detection rule testing.
 
 Usage:
     pip install qrcode[pil] Pillow   # optional, for QR images
     python generate_phishing_artifacts.py
-    python generate_phishing_artifacts.py --count 5 --url http://phishtest.internal --domain eci.com
+    python generate_phishing_artifacts.py --count 5 --url http://phishtest.internal --domain novacorp.com
 """
 
 import os
@@ -38,8 +38,8 @@ except ImportError:
 CONFIG = {
     "output_dir": "./phishing_artifacts",
     "test_base_url": "http://phishtest.internal",
-    "target_company": "ECI",
-    "target_domain": "eci.com",
+    "target_company": "NovaCorp",
+    "target_domain": "novacorp.com",
     "sender_domains": [
         "microsoft-security.com",
         "docusign-alerts.net",
@@ -72,7 +72,7 @@ def ensure_dirs(base: str):
         "html_attachments",
         "siem_alerts/elastic",
         "siem_alerts/sentinel",
-        "qevlar_payloads",
+        "soc_payloads",
         "reports",
     ]
     for d in subdirs:
@@ -116,8 +116,8 @@ def set_headers(msg, sender_name, sender_email, recipient_email, subject, date):
         ["Microsoft Outlook 16.0", "Apple Mail 16.0", "Thunderbird 115.0"]
     )
     msg["X-Originating-IP"] = fake_ip()
-    msg["X-Simulation-Type"] = "PHISHING-POC-BENIGN-ECI"
-    msg["X-SOC-Test-ID"] = f"QEVLAR-POC-{uuid.uuid4().hex[:8].upper()}"
+    msg["X-Simulation-Type"] = "PHISHING-SIM-BENIGN"
+    msg["X-SOC-Test-ID"] = f"SOC-SIM-{uuid.uuid4().hex[:8].upper()}"
     return msg
 
 
@@ -164,7 +164,7 @@ def html_credential_page(test_url: str) -> str:
   </style>
 </head>
 <body>
-  <!-- SOC SIMULATION - NON-MALICIOUS - ECI QEVLAR POC -->
+  <!-- SOC SIMULATION - NON-MALICIOUS -->
   <div class="card">
     <div class="logo">Microsoft</div>
     <h1>Sign in</h1>
@@ -196,7 +196,7 @@ def html_mfa_page(test_url: str) -> str:
   </style>
 </head>
 <body>
-  <!-- SOC SIMULATION - NON-MALICIOUS - ECI QEVLAR POC -->
+  <!-- SOC SIMULATION - NON-MALICIOUS -->
   <div class="card">
     <h2>Verify it's you</h2>
     <p>Enter the 6-digit code from your Authenticator app to continue.</p>
@@ -239,7 +239,7 @@ def gen_clickfix(out: str, cfg: dict) -> dict:
         mshta {payload_url}
       </div>
       <p style="color:#888;font-size:11px;margin-top:20px;">
-        [SOC SIMULATION — CLICKFIX LURE — ECI QEVLAR POC — NOT MALICIOUS]
+        [SOC SIMULATION — CLICKFIX LURE — NOT MALICIOUS]
       </p>
     </td></tr>
   </table>
@@ -288,7 +288,7 @@ def gen_credential_harvest(out: str, cfg: dict) -> dict:
     <a href="{harvest_url}" style="display:inline-block;background:#0078d4;color:#fff;padding:10px 24px;text-decoration:none;border-radius:2px;font-size:14px;">
       Review Recent Activity
     </a>
-    <p style="color:#888;font-size:11px;margin-top:24px;">[SOC SIMULATION — CREDENTIAL HARVEST — ECI QEVLAR POC]</p>
+    <p style="color:#888;font-size:11px;margin-top:24px;">[SOC SIMULATION — CREDENTIAL HARVEST — ]</p>
   </div>
 </div></body></html>"""
 
@@ -341,7 +341,7 @@ def gen_quishing(out: str, cfg: dict) -> dict:
       <p style="font-size:12px;color:#605e5c;margin-top:8px;">QR Code expires in 10 minutes</p>
     </div>
     <p style="font-size:12px;color:#605e5c;">Cannot scan? <a href="{qr_url}">Click here instead</a></p>
-    <p style="color:#aaa;font-size:11px;margin-top:20px;">[SOC SIMULATION — QUISHING — ECI QEVLAR POC — QR URL: {qr_url}]</p>
+    <p style="color:#aaa;font-size:11px;margin-top:20px;">[SOC SIMULATION — QUISHING —  QR URL: {qr_url}]</p>
   </div>
 </div></body></html>"""
 
@@ -388,7 +388,7 @@ def gen_html_attachment(out: str, cfg: dict) -> dict:
       <p><strong>Expires:</strong> {(date + timedelta(days=3)).strftime('%B %d, %Y')}</p>
     </div>
     <p>Open the attached file to access your secure document portal.</p>
-    <p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — HTML ATTACHMENT — ECI QEVLAR POC]</p>
+    <p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — HTML ATTACHMENT — ]</p>
   </div>
 </div></body></html>"""
 
@@ -446,7 +446,7 @@ I'm in back-to-back meetings but will check messages. Confirm once initiated.
 {exec_name}
 {exec_title}, {cfg['target_company']}
 
-[SOC SIMULATION — BEC — ECI QEVLAR POC — NOT MALICIOUS]"""
+[SOC SIMULATION — BEC — NOT MALICIOUS]"""
 
     html = f"""<html><body>
 <div style="font-family:Calibri,Arial;font-size:14px;max-width:600px;">
@@ -463,7 +463,7 @@ I'm in back-to-back meetings but will check messages. Confirm once initiated.
   </table>
   <p>I'm in back-to-back meetings but will check messages. Confirm once initiated.</p>
   <p><strong>{exec_name}</strong><br>{exec_title}, {cfg['target_company']}</p>
-  <p style="font-size:10px;color:#aaa;">[SOC SIMULATION — BEC — ECI QEVLAR POC]</p>
+  <p style="font-size:10px;color:#aaa;">[SOC SIMULATION — BEC — ]</p>
 </div></body></html>"""
 
     msg.attach(MIMEText(text, "plain"))
@@ -511,7 +511,7 @@ def gen_invoice(out: str, cfg: dict) -> dict:
     <a href="{pay_url}" style="background:#e53e3e;color:#fff;padding:12px 28px;text-decoration:none;border-radius:4px;display:inline-block;font-weight:700;">
       Pay Now — Avoid Penalty
     </a>
-    <p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — INVOICE PHISHING — ECI QEVLAR POC]</p>
+    <p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — INVOICE PHISHING — ]</p>
   </div>
 </div></body></html>"""
 
@@ -557,7 +557,7 @@ def gen_delivery(out: str, cfg: dict) -> dict:
     <a href="{pay_url}" style="background:#ff6600;color:#fff;padding:10px 24px;text-decoration:none;border-radius:4px;display:inline-block;">
       Pay Fee & Reschedule Delivery
     </a>
-    <p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — DELIVERY PHISHING — ECI QEVLAR POC]</p>
+    <p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — DELIVERY PHISHING — ]</p>
   </div>
 </div></body></html>"""
 
@@ -598,7 +598,7 @@ def gen_mfa_reset(out: str, cfg: dict) -> dict:
     <p style="color:#718096;font-size:13px;margin-top:16px;">
       This link expires in <strong>15 minutes</strong>.<br>Reference: {token[:12]}...
     </p>
-    <p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — MFA RESET PHISHING — ECI QEVLAR POC]</p>
+    <p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — MFA RESET PHISHING — ]</p>
   </div>
 </div></body></html>"""
 
@@ -668,11 +668,11 @@ def gen_elastic_alert(artifact: dict, cfg: dict) -> dict:
         "url": {"full": artifact.get("ioc", {}).get("url",
                         artifact.get("ioc", {}).get("qr_url", cfg["test_base_url"]))},
         "labels": {
-            "simulation": "true", "poc": "qevlar",
+            "simulation": "true", "poc": "soc-sim",
             "phishing_type": artifact["type"],
             "eml_file": os.path.basename(artifact.get("file", "")),
         },
-        "tags": ["phishing", "poc-simulation", "qevlar", artifact["type"]],
+        "tags": ["phishing", "poc-simulation", "soc-sim", artifact["type"]],
     }
 
 
@@ -704,15 +704,15 @@ def gen_sentinel_alert(artifact: dict, cfg: dict) -> dict:
         "ExtendedProperties": json.dumps({
             "SimulationType": artifact["type"],
             "ArtifactFile": os.path.basename(artifact.get("file","")),
-            "QevlarPOC": "true",
+            "SOCSimulation": "true",
             "TestRunDate": datetime.now().strftime("%Y-%m-%d"),
         }),
         "ConfidenceLevel": "High",
     }
 
 
-def gen_qevlar_payload(artifact: dict, elastic: dict) -> dict:
-    """Normalized Qevlar-compatible investigation payload"""
+def gen_soc_payload(artifact: dict, elastic: dict) -> dict:
+    """Normalized SOC/SOAR-compatible alert payload"""
     ioc = artifact.get("ioc", {})
     return {
         "alert_id": elastic.get("kibana.alert.uuid", str(uuid.uuid4())),
@@ -771,7 +771,7 @@ GENERATORS = [
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Phishing Simulation Artifact Generator — ECI Qevlar POC")
+        description="Phishing Simulation Artifact Generator — Internal SOC Lab")
     parser.add_argument("--output", default=CONFIG["output_dir"])
     parser.add_argument("--count", type=int, default=3,
                         help="Samples per category (default: 3)")
@@ -791,7 +791,7 @@ def main():
         print("[WARN] qrcode/Pillow not installed — QR images will be text placeholders.")
         print("       pip install qrcode[pil] Pillow\n")
 
-    print(f"[+] Phishing Artifact Generator — ECI Qevlar POC")
+    print(f"[+] Phishing Artifact Generator — Internal SOC Lab")
     print(f"[+] Output   : {CONFIG['output_dir']}")
     print(f"[+] Test URL : {CONFIG['test_base_url']}")
     print(f"[+] Samples  : {args.count} x {len(GENERATORS)} categories = {args.count*len(GENERATORS)} total\n")
@@ -804,14 +804,14 @@ def main():
                 artifact = gen_fn(CONFIG["output_dir"], CONFIG)
                 elastic = gen_elastic_alert(artifact, CONFIG)
                 sentinel = gen_sentinel_alert(artifact, CONFIG)
-                qevlar = gen_qevlar_payload(artifact, elastic)
+                soc_payload = gen_soc_payload(artifact, elastic)
 
                 base = f"{artifact['type']}_{uuid.uuid4().hex[:8]}"
                 save_json(elastic, os.path.join(CONFIG["output_dir"], "siem_alerts/elastic", f"{base}.json"))
                 save_json(sentinel, os.path.join(CONFIG["output_dir"], "siem_alerts/sentinel", f"{base}.json"))
-                save_json(qevlar, os.path.join(CONFIG["output_dir"], "qevlar_payloads", f"{base}.json"))
+                save_json(soc_payload, os.path.join(CONFIG["output_dir"], "soc_payloads", f"{base}.json"))
 
-                all_artifacts.append({**artifact, "qevlar_alert_id": qevlar["alert_id"]})
+                all_artifacts.append({**artifact, "alert_id": soc_payload["alert_id"]})
                 print(f"  [+] {artifact['type']:<30} {os.path.basename(artifact['file'])}")
 
             except Exception as e:
@@ -834,9 +834,9 @@ def main():
     print(f"    HTML pages     : {CONFIG['output_dir']}/html_attachments/")
     print(f"    Elastic alerts : {CONFIG['output_dir']}/siem_alerts/elastic/")
     print(f"    Sentinel alerts: {CONFIG['output_dir']}/siem_alerts/sentinel/")
-    print(f"    Qevlar payloads: {CONFIG['output_dir']}/qevlar_payloads/")
+    print(f"    SOC payloads   : {CONFIG['output_dir']}/soc_payloads/")
     print(f"    Manifest       : {CONFIG['output_dir']}/reports/manifest.json")
-    print(f"\n[!] All artifacts are benign. For ECI SOC / Qevlar POC use only.")
+    print(f"\n[!] All artifacts are benign. For internal SOC use only.")
 
 
 if __name__ == "__main__":

