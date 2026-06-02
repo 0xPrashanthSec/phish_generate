@@ -131,7 +131,7 @@ function Get-HtmlCredentialPage {
 <body><div class="card"><div class="logo">Microsoft</div><h1>Sign in</h1><p>Use your Microsoft account</p>
 <input type="email" placeholder="Email, phone, or Skype">
 <input type="password" placeholder="Password">
-<button class="btn" onclick="window.location.href='$TestBaseUrl?t=cred&a=submit'">Next</button>
+<button class="btn" onclick="window.location.href='${TestBaseUrl}?t=cred&a=submit'">Next</button>
 <div class="sim">SOC SIMULATION - No credentials are captured.</div></div></body></html>
 "@
 }
@@ -248,7 +248,7 @@ function New-BECEmail {
 
     return @{type="bec"; file=$fpath; subject=$subject; exec_impersonated="$exName ($exTitle)";
              sender="$exName - $exTitle <$sender>"; date=$date.ToString("o");
-             ioc=@{amount="`$$("{0:N0}" -f $amount)"; bank=$bank; sender_domain=$domain}}
+             ioc=@{amount="`$$("{0:N0}" -f $amount)"; bank=$bank; sender_domain=$domain; url=""}}
 }
 
 function New-InvoiceEmail {
@@ -464,7 +464,7 @@ foreach ($gen in $generators) {
 $manifest = @{
     generated_at   = (Get-Date).ToUniversalTime().ToString("o")
     total_artifacts = $allArtifacts.Count
-    categories     = $allArtifacts | Select-Object -ExpandProperty type -Unique
+    categories     = @($allArtifacts | ForEach-Object { $_.type } | Select-Object -Unique)
     config         = @{output_dir=$OutputDir; test_base_url=$TestBaseUrl; target_domain=$TargetDomain}
     artifacts      = $allArtifacts
 }
